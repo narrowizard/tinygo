@@ -1,4 +1,8 @@
-#TinyGo 1.0
+# TinyGo 1.0
+
+[![Build Status](https://travis-ci.org/narrowizard/tinygo.svg?branch=master)](https://travis-ci.org/narrowizard/tinygo)
+[![Coverage Status](https://coveralls.io/repos/github/narrowizard/tinygo/badge.svg?branch=master)](https://coveralls.io/github/narrowizard/tinygo?branch=master)
+
 一个轻量级Http框架  
 
 查看tinygo文档的方法如下:  
