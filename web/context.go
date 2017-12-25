@@ -1,6 +1,8 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -73,7 +75,13 @@ type Context struct {
 func NewContext(segments []string, context *connector.HttpContext, processor *HttpProcessor) (*Context, error) {
 	var contentType = context.Request.Header.Get("Content-Type")
 	var err error
-	if strings.HasPrefix(contentType, "multipart/form-data") {
+	var mapData map[string]interface{}
+	// application/json support (only support string,float64,bool)
+	if strings.HasPrefix(contentType, "application/json") {
+		mapData = make(map[string]interface{})
+		var jsonDecoder = json.NewDecoder(context.Request.Body)
+		err = jsonDecoder.Decode(&mapData)
+	} else if strings.HasPrefix(contentType, "multipart/form-data") {
 		err = context.Request.ParseMultipartForm(int64(processor.Config.MaxRequestMemory))
 	} else {
 		err = context.Request.ParseForm()
@@ -86,6 +94,23 @@ func NewContext(segments []string, context *connector.HttpContext, processor *Ht
 	c.Segs = append(segments, method)
 	c.HttpContext = context
 	c.Processor = processor
+	if strings.HasPrefix(contentType, "application/json") {
+		// parse url query string and init form map
+		err = context.Request.ParseForm()
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range mapData {
+			var kind = reflect.TypeOf(v).Kind()
+			if kind == reflect.Array || kind == reflect.Slice {
+				for _, ve := range v.([]interface{}) {
+					c.SetValue(k, fmt.Sprintf("%v", ve))
+				}
+			} else {
+				c.SetValue(k, fmt.Sprintf("%v", v))
+			}
+		}
+	}
 	return c, nil
 }
 
